@@ -3,6 +3,7 @@ package org.altbeacon.beaconreference
 import android.Manifest
 import android.app.AlertDialog
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -39,8 +40,12 @@ class MainActivity : AppCompatActivity() {
         beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayOf("--"))
     }
 
-
+    override fun onPause() {
+        Log.d(TAG, "onPause")
+        super.onPause()
+    }
     override fun onResume() {
+        Log.d(TAG, "onResume")
         super.onResume()
         checkPermissions()
     }
@@ -75,11 +80,13 @@ class MainActivity : AppCompatActivity() {
     // This gets called from the BeaconReferenceApplication when ranging callbacks change things
     val rangingObserver = Observer<Collection<Beacon>> { beacons ->
         Log.d(TAG, "Ranged: ${beacons.count()} beacons")
-        beaconCountTextView.text = "Ranging enabled: ${beacons.count()} beacon(s) detected"
-        beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1,
-            beacons
-                .sortedBy { it.distance }
-                .map { "${it.id1}\nid2: ${it.id2} id3: ${it.id3} rssi: ${it.rssi}\nest. distance: ${it.distance} m" }.toTypedArray())
+        if (BeaconManager.getInstanceForApplication(this).rangedRegions.size > 0) {
+            beaconCountTextView.text = "Ranging enabled: ${beacons.count()} beacon(s) detected"
+            beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1,
+                beacons
+                    .sortedBy { it.distance }
+                    .map { "${it.id1}\nid2: ${it.id2} id3:  rssi: ${it.rssi}\nest. distance: ${it.distance} m" }.toTypedArray())
+        }
     }
 
     fun rangingButtonTapped(view: View) {
@@ -87,6 +94,7 @@ class MainActivity : AppCompatActivity() {
         if (beaconManager.rangedRegions.size == 0) {
             beaconManager.startRangingBeaconsInRegion(beaconReferenceApplication.region)
             rangingButton.text = "Stop Ranging"
+            beaconCountTextView.text = "Ranging enabled -- awaiting first callback"
         }
         else {
             beaconManager.stopRangingBeaconsInRegion(beaconReferenceApplication.region)
@@ -107,6 +115,17 @@ class MainActivity : AppCompatActivity() {
             monitoringButton.text = "Start Monitoring"
         }
 
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        for (i in 1..permissions.size-1) {
+            Log.d(TAG, "onRequestPermissionResult for "+permissions[i]+":" +grantResults[i])
+        }
     }
 
 
@@ -140,13 +159,23 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                requestPermissions(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                    ),
-                    PERMISSION_REQUEST_FINE_LOCATION
-                )
+                if (android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                    requestPermissions(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        ),
+                        PERMISSION_REQUEST_FINE_LOCATION
+                    )
+                }
+                else {
+                    requestPermissions(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ),
+                        PERMISSION_REQUEST_FINE_LOCATION
+                    )
+                }
             } else {
                 val builder = AlertDialog.Builder(this)
                 builder.setTitle("Functionality limited")

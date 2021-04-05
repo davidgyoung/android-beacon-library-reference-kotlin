@@ -21,6 +21,7 @@ import org.altbeacon.bluetooth.BluetoothMedic
 class BeaconReferenceApplication: Application(), BootstrapNotifier, RangeNotifier {
     val rangingData = RangingData()
     val monitoringData = MonitoringData()
+    var alreadyStartedRangingAtBoot = false
     lateinit var region: Region
     lateinit var regionBootstrap: RegionBootstrap
 
@@ -65,7 +66,7 @@ class BeaconReferenceApplication: Application(), BootstrapNotifier, RangeNotifie
         // - periodically do a proactive scan or transmission to verify the bluetooth stack is OK
         BluetoothMedic.getInstance().setNotificationsEnabled(true, R.drawable.ic_launcher_background)
         BluetoothMedic.getInstance().enablePowerCycleOnFailures(this)
-        BluetoothMedic.getInstance().enablePeriodicTests(this, BluetoothMedic.SCAN_TEST)
+        BluetoothMedic.getInstance().enablePeriodicTests(this, BluetoothMedic.SCAN_TEST + BluetoothMedic.TRANSMIT_TEST)
 
         // simply constructing this class will automatically cause the library to save battery
         // whenever the application is not visible.  This reduces bluetooth power usage by about 60%
@@ -76,7 +77,7 @@ class BeaconReferenceApplication: Application(), BootstrapNotifier, RangeNotifie
         // If you want to continuously range beacons in the background more often than every 15 mintues,
         // you can use the library's built-in foreground service to unlock this behavior on Android
         // 8+.   the method below shows how you set that up.
-        setupForegroundService()
+        //setupForegroundService()
 
         // The code below will start "monitoring" for beacons matching the region definition below
         // the region definition is a wildcard that matches all beacons regardless of identifiers.
@@ -98,9 +99,9 @@ class BeaconReferenceApplication: Application(), BootstrapNotifier, RangeNotifie
         // which will be limited to scan jobs scheduled every ~15 minutes on Android 8+
         // If you want more frequent scanning (requires a foreground service on Android 8+),
         // configure that here:
-        // beaconManager.setEnableScheduledScanJobs(false);
-        // beaconManager.setBackgroundBetweenScanPeriod(0);
-        // beaconManager.setBackgroundScanPeriod(1100);
+        //beaconManager.setEnableScheduledScanJobs(false);
+        //beaconManager.setBackgroundBetweenScanPeriod(0);
+        //beaconManager.setBackgroundScanPeriod(1100);
     }
 
     fun disableMonitoring() {
@@ -139,7 +140,8 @@ class BeaconReferenceApplication: Application(), BootstrapNotifier, RangeNotifie
         Log.d(TAG, "didDetermineStateForRegion")
         monitoringData.state.postValue(state)
         // This is a convenient place to start ranging if you want it on.
-        if (region != null) {
+        if (region != null  && alreadyStartedRangingAtBoot == false) {
+            alreadyStartedRangingAtBoot = true
             BeaconManager.getInstanceForApplication(this).startRangingBeaconsInRegion(region)
             BeaconManager.getInstanceForApplication(this).addRangeNotifier(this)
         }
