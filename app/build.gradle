@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    buildToolsVersion "30.0.3" //31.0.0
 
     defaultConfig {
         applicationId "org.altbeacon.beaconreference"
@@ -30,8 +30,8 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.3.1'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'org.altbeacon:android-beacon-library:2.18-beta'
-    //implementation(name:'android-beacon-library-2.18-beta', ext:'aar')
+    implementation 'org.altbeacon:android-beacon-library:2.19-beta5'
+    //implementation(name:'android-beacon-library-2.19-beta5-4-g3959dc9', ext:'aar')
     //implementation project(':android-beacon-library:lib')
     // Needed for legacy LocalBroadcastManager used by the library prior to library version 2.18
     //implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
