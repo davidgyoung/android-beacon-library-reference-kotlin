@@ -16,6 +16,7 @@ class BeaconReferenceApplication: Application() {
         super.onCreate()
 
         val beaconManager = BeaconManager.getInstanceForApplication(this)
+        BeaconManager.setDebug(true)
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
