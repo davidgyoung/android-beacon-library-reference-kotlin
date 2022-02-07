@@ -74,7 +74,7 @@ class BeaconReferenceApplication: Application() {
         // the region definition is a wildcard that matches all beacons regardless of identifiers.
         // if you only want to detect beacons with a specific UUID, change the id1 paremeter to
         // a UUID like Identifier.parse("2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6")
-        region = Region("radius-uuid", null, null, null)
+        region = Region("all-beacons", null, null, null)
         beaconManager.startMonitoring(region)
         beaconManager.startRangingBeacons(region)
         // These two lines set up a Live Data observer so this Activity can get beacon data from the Application class
