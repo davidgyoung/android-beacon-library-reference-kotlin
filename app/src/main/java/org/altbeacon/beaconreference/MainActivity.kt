@@ -158,6 +158,10 @@ class MainActivity : AppCompatActivity() {
             // permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN)
             permissionRationale ="This app needs both fine location permission and nearby devices permission to detect beacons.  Please grant both now."
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.BLUETOOTH_SCAN)
+            permissionRationale ="This app needs fine location permission,  nearby devices permission, and bluetooth scan permission to detect beacons.  Please grant all of these now."
+        }
         var allGranted = true
         for (permission in permissions) {
             if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) allGranted = false;
@@ -216,13 +220,72 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            else if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.S &&
+                (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)
+                        != PackageManager.PERMISSION_GRANTED)) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_SCAN)) {
+                    val builder =
+                        AlertDialog.Builder(this)
+                    builder.setTitle("This app needs bluetooth scan permission")
+                    builder.setMessage("Please grant scan permission so this app can detect beacons.")
+                    builder.setPositiveButton(android.R.string.ok, null)
+                    builder.setOnDismissListener {
+                        requestPermissions(
+                            arrayOf(Manifest.permission.BLUETOOTH_SCAN),
+                            PERMISSION_REQUEST_BLUETOOTH_SCAN
+                        )
+                    }
+                    builder.show()
+                } else {
+                    val builder =
+                        AlertDialog.Builder(this)
+                    builder.setTitle("Functionality limited")
+                    builder.setMessage("Since bluetooth scan permission has not been granted, this app will not be able to discover beacons  Please go to Settings -> Applications -> Permissions and grant bluetooth scan permission to this app.")
+                    builder.setPositiveButton(android.R.string.ok, null)
+                    builder.setOnDismissListener { }
+                    builder.show()
+                }
+            }
+            else {
+                if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                    if (checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                            val builder =
+                                AlertDialog.Builder(this)
+                            builder.setTitle("This app needs background location access")
+                            builder.setMessage("Please grant location access so this app can detect beacons in the background.")
+                            builder.setPositiveButton(android.R.string.ok, null)
+                            builder.setOnDismissListener {
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                                    PERMISSION_REQUEST_BACKGROUND_LOCATION
+                                )
+                            }
+                            builder.show()
+                        } else {
+                            val builder =
+                                AlertDialog.Builder(this)
+                            builder.setTitle("Functionality limited")
+                            builder.setMessage("Since background location access has not been granted, this app will not be able to discover beacons in the background.  Please go to Settings -> Applications -> Permissions and grant background location access to this app.")
+                            builder.setPositiveButton(android.R.string.ok, null)
+                            builder.setOnDismissListener { }
+                            builder.show()
+                        }
+                    }
+                }
+            }
         }
+
     }
 
     companion object {
         val TAG = "MainActivity"
         val PERMISSION_REQUEST_BACKGROUND_LOCATION = 0
-        val PERMISSION_REQUEST_FINE_LOCATION = 1
+        val PERMISSION_REQUEST_BLUETOOTH_SCAN = 1
+        val PERMISSION_REQUEST_BLUETOOTH_CONNECT = 2
+        val PERMISSION_REQUEST_FINE_LOCATION = 3
     }
 
 }
