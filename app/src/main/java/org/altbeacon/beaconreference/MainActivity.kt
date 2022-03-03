@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var rangingButton: Button
     lateinit var beaconReferenceApplication: BeaconReferenceApplication
     var alertDialog: AlertDialog? = null
+    var neverAskAgainPermissions = ArrayList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,33 +142,44 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         for (i in 1..permissions.size-1) {
             Log.d(TAG, "onRequestPermissionResult for "+permissions[i]+":" +grantResults[i])
+            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                //check if user select "never ask again" when denying any permission
+                if (!shouldShowRequestPermissionRationale(permissions[i])) {
+                    neverAskAgainPermissions.add(permissions[i])
+                }
+            }
         }
     }
 
 
     fun checkPermissions() {
         // basepermissions are for M and higher
-        var permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        var permissionRationale ="This app needs both fine location permission and background location permission to detect beacons in the background.  Please grant both now."
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-            permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION)
-            permissionRationale ="This app needs fine location permission and nearby devices permission to detect beacons.  Please grant this now."
-        }
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
-            // Uncomment line below if targeting SDK 31
-            // permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN)
-            permissionRationale ="This app needs both fine location permission and nearby devices permission to detect beacons.  Please grant both now."
-        }
+        var permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION)
+        var permissionRationale ="This app needs fine location permission to detect beacons.  Please grant this now."
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION, Manifest.permission.BLUETOOTH_SCAN)
-            permissionRationale ="This app needs fine location permission,  nearby devices permission, and bluetooth scan permission to detect beacons.  Please grant all of these now."
+            permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN)
+            permissionRationale ="This app needs fine location permission, and bluetooth scan permission to detect beacons.  Please grant all of these now."
+        }
+        else if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if ((checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+                permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION)
+                permissionRationale ="This app needs fine location permission to detect beacons.  Please grant this now."
+            }
+            else {
+                permissions = arrayOf( Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                permissionRationale ="This app needs background location permission to detect beacons in the background.  Please grant this now."
+            }
+        }
+        else if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions = arrayOf( Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            permissionRationale ="This app needs both fine location permission and background location permission to detect beacons in the background.  Please grant both now."
         }
         var allGranted = true
         for (permission in permissions) {
             if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) allGranted = false;
         }
         if (!allGranted) {
-            if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (neverAskAgainPermissions.count() == 0) {
                 val builder =
                     AlertDialog.Builder(this)
                 builder.setTitle("This app needs permissions to detect beacons")
