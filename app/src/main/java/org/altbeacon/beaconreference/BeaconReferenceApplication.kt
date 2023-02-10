@@ -51,7 +51,7 @@ class BeaconReferenceApplication: Application() {
         // stack and optionally:
         // - power cycle bluetooth to recover on bluetooth problems
         // - periodically do a proactive scan or transmission to verify the bluetooth stack is OK
-        // BluetoothMedic.getInstance().enablePowerCycleOnFailures(this)
+        // BluetoothMedic.getInstance().legacyEnablePowerCycleOnFailures(this) // Android 4-12 only
         // BluetoothMedic.getInstance().enablePeriodicTests(this, BluetoothMedic.SCAN_TEST + BluetoothMedic.TRANSMIT_TEST)
 
         // By default, the library will scan in the background every 5 minutes on Android 4-7,
