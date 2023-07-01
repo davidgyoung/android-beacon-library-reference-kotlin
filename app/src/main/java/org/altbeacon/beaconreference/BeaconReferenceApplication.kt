@@ -37,10 +37,15 @@ class BeaconReferenceApplication: Application() {
         // If you don't care about AltBeacon, you can clear it from the defaults:
         beaconManager.getBeaconParsers().clear()
 
+        // Uncomment if you want to block the library from updating its distance model database
+        //BeaconManager.setDistanceModelUpdateUrl("")
+
         // The example shows how to find iBeacon.
+        val parser = BeaconParser().
+        setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
+        parser.setHardwareAssistManufacturerCodes(arrayOf(0x004c).toIntArray())
         beaconManager.getBeaconParsers().add(
-            BeaconParser().
-                setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
+            parser)
 
         // enabling debugging will send lots of verbose debug information from the library to Logcat
         // this is useful for troubleshooting problmes
