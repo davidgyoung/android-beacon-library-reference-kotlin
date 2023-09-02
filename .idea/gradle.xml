@@ -11,6 +11,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/android-beacon-library" />
+            <option value="$PROJECT_DIR$/android-beacon-library/lib" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>

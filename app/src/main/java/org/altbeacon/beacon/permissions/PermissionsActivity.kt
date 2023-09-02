@@ -94,6 +94,10 @@ class PermissionsHelper(val context: Context) {
             // and the aditional cost of requsting this access is minimal, so we just request it
             permissions.add(arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT))
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // As of version T (13) we POST_NOTIFICATIONS permissions if using a foreground service
+            permissions.add(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
+        }
         return permissions
     }
 
@@ -187,6 +191,7 @@ open class BeaconScanPermissionsActivity: PermissionsActivity()  {
         bundle.putString(Manifest.permission.ACCESS_FINE_LOCATION, "Location")
         bundle.putString(Manifest.permission.ACCESS_BACKGROUND_LOCATION, "Background Location")
         bundle.putString(Manifest.permission.BLUETOOTH_SCAN, "Bluetooth")
+        bundle.putString(Manifest.permission.POST_NOTIFICATIONS, "Notifications")
         return bundle
     }
 

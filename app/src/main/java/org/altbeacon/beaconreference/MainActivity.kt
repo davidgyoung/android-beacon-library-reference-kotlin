@@ -66,6 +66,14 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("backgroundAccessRequested", true)
             startActivity(intent)
         }
+        else {
+            // All permissions are granted now.  In the case where we are configured
+            // to use a foreground service, we will not have been able to start scanning until
+            // after permissions are graned.  So we will do so here.
+            if (BeaconManager.getInstanceForApplication(this).monitoredRegions.size == 0) {
+                (application as BeaconReferenceApplication).setupBeaconScanning()
+            }
+        }
     }
 
     val monitoringObserver = Observer<Int> { state ->
