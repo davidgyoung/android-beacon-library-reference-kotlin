@@ -38,7 +38,7 @@ class BeaconReferenceApplication: Application() {
         // for that beacon's advertisement with a line like below.
         //
         // If you don't care about AltBeacon, you can clear it from the defaults:
-        beaconManager.getBeaconParsers().clear()
+        //beaconManager.getBeaconParsers().clear()
 
         // Uncomment if you want to block the library from updating its distance model database
         //BeaconManager.setDistanceModelUpdateUrl("")
@@ -85,9 +85,9 @@ class BeaconReferenceApplication: Application() {
             Log.d(TAG, "Not setting up foreground service scanning until location permission granted by user")
             return
         }
-        beaconManager.setEnableScheduledScanJobs(false);
-        beaconManager.setBackgroundBetweenScanPeriod(0);
-        beaconManager.setBackgroundScanPeriod(1100);
+        //beaconManager.setEnableScheduledScanJobs(false);
+        //beaconManager.setBackgroundBetweenScanPeriod(0);
+        //beaconManager.setBackgroundScanPeriod(1100);
 
         // Ranging callbacks will drop out if no beacons are detected
         // Monitoring callbacks will be delayed by up to 25 minutes on region exit
