@@ -14,6 +14,8 @@ import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.MonitorNotifier
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import org.altbeacon.beacon.permissions.BeaconScanPermissionsActivity
 
 class MainActivity : AppCompatActivity() {
@@ -41,7 +43,10 @@ class MainActivity : AppCompatActivity() {
         beaconCountTextView = findViewById<TextView>(R.id.beaconCount)
         beaconCountTextView.text = "No beacons detected"
         beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayOf("--"))
-    }
+        Handler(Looper.getMainLooper()).postDelayed({
+            Log.d(TAG, "onCreate: running")
+            throw NullPointerException("abscc")
+        },10000) }
 
     override fun onPause() {
         Log.d(TAG, "onPause")
