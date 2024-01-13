@@ -3,23 +3,29 @@ package org.altbeacon.beaconreference
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
+import com.davidgyoungtech.beaconparsers.IBeaconParser
 import org.altbeacon.beacon.*
 import org.altbeacon.bluetooth.BluetoothMedic
+import java.util.ArrayList
 
 class BeaconReferenceApplication: Application() {
     // the region definition is a wildcard that matches all beacons regardless of identifiers.
     // if you only want to detect beacons with a specific UUID, change the id1 paremeter to
     // a UUID like Identifier.parse("2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6")
-    var region = Region("all-beacons", null, null, null)
+    //var region = Region("all-beacons", null, null, null)
+    val iBeaconRegion = BeaconRegion("all-ibeacons", IBeaconParser(), null, null, null)
+    //val altBeaconRegion = BeaconRegion("all-altbeacons", AltBeaconParser(), null, null, null)
 
     override fun onCreate() {
         super.onCreate()
 
         val beaconManager = BeaconManager.getInstanceForApplication(this)
         BeaconManager.setDebug(true)
+//        beaconManager.beaconParsers.add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
 
         // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
         // find a different type of beacon, you must specify the byte layout for that beacon's
@@ -43,12 +49,6 @@ class BeaconReferenceApplication: Application() {
         // Uncomment if you want to block the library from updating its distance model database
         //BeaconManager.setDistanceModelUpdateUrl("")
 
-        // The example shows how to find iBeacon.
-        val parser = BeaconParser().
-        setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
-        parser.setHardwareAssistManufacturerCodes(arrayOf(0x004c).toIntArray())
-        beaconManager.getBeaconParsers().add(
-            parser)
 
         // enabling debugging will send lots of verbose debug information from the library to Logcat
         // this is useful for troubleshooting problmes
@@ -65,6 +65,29 @@ class BeaconReferenceApplication: Application() {
         setupBeaconScanning()
     }
     fun setupBeaconScanning() {
+        val settings = Settings(
+            scanStrategy = Settings.ForegroundServiceScanStrategy(
+                Notification.Builder(
+                    this,
+                    "BeaconReferenceApp"
+                ).build(), 1
+            ),
+            scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
+        )
+
+        // This will apply the new settings immediately, overwriting thre previously active settings
+        // any individual settings not specifified on the new settings object will revert to their defaults
+        BeaconManager.getInstanceForApplication(this).setSettings(settings)
+
+
+        //scanStrategy = Settings.IntentScanStrategy(),
+        //scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
+
+
+        BeaconManager.getInstanceForApplication(this).activeSettings
+    }
+
+    fun setupBeaconScanningOld() {
         val beaconManager = BeaconManager.getInstanceForApplication(this)
 
         // By default, the library will scan in the background every 5 minutes on Android 4-7,
@@ -74,30 +97,32 @@ class BeaconReferenceApplication: Application() {
         // If you want to continuously range beacons in the background more often than every 15 mintues,
         // you can use the library's built-in foreground service to unlock this behavior on Android
         // 8+.   the method below shows how you set that up.
-        try {
-            setupForegroundService()
-        }
-        catch (e: SecurityException) {
+        //try {
+        //    setupForegroundService()
+        //}
+        //catch (e: SecurityException) {
             // On Android TIRAMUSU + this security exception will happen
             // if location permission has not been granted when we start
             // a foreground service.  In this case, wait to set this up
             // until after that permission is granted
-            Log.d(TAG, "Not setting up foreground service scanning until location permission granted by user")
-            return
-        }
-        //beaconManager.setEnableScheduledScanJobs(false);
-        //beaconManager.setBackgroundBetweenScanPeriod(0);
-        //beaconManager.setBackgroundScanPeriod(1100);
+        //    Log.d(TAG, "Not setting up foreground service scanning until location permission granted by user")
+        //    return
+        //}
+
+
+        beaconManager.setEnableScheduledScanJobs(false);
+        beaconManager.setBackgroundBetweenScanPeriod(0);
+        beaconManager.setBackgroundScanPeriod(1100);
 
         // Ranging callbacks will drop out if no beacons are detected
         // Monitoring callbacks will be delayed by up to 25 minutes on region exit
         // beaconManager.setIntentScanningStrategyEnabled(true)
 
         // The code below will start "monitoring" for beacons matching the region definition at the top of this file
-        beaconManager.startMonitoring(region)
-        beaconManager.startRangingBeacons(region)
+        beaconManager.startMonitoring(iBeaconRegion)
+        beaconManager.startRangingBeacons(iBeaconRegion)
         // These two lines set up a Live Data observer so this Activity can get beacon data from the Application class
-        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(region)
+        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(iBeaconRegion)
         // observer will be called each time the monitored regionState changes (inside vs. outside region)
         regionViewModel.regionState.observeForever( centralMonitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
@@ -128,10 +153,10 @@ class BeaconReferenceApplication: Application() {
 
     val centralMonitoringObserver = Observer<Int> { state ->
         if (state == MonitorNotifier.OUTSIDE) {
-            Log.d(TAG, "outside beacon region: "+region)
+            Log.d(TAG, "outside beacon region: "+iBeaconRegion)
         }
         else {
-            Log.d(TAG, "inside beacon region: "+region)
+            Log.d(TAG, "inside beacon region: "+iBeaconRegion)
             sendNotification()
         }
     }

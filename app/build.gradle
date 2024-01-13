@@ -40,8 +40,11 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.3.1'
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'org.altbeacon:android-beacon-library:2.20'
-    //implementation project(':android-beacon-library:lib')
+    implementation('com.davidgyoungtech:beacon-parsers:1.0') {
+        exclude group: 'org.altbeacon', module: 'android-beacon-library'
+    }
+    //implementation 'org.altbeacon:android-beacon-library:2.20.2'
+    implementation project(':android-beacon-library:lib')
 
     //coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'

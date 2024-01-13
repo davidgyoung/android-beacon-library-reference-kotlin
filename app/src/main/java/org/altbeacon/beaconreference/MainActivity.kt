@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         beaconReferenceApplication = application as BeaconReferenceApplication
 
         // Set up a Live Data observer for beacon data
-        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(beaconReferenceApplication.region)
+        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(beaconReferenceApplication.iBeaconRegion)
         // observer will be called each time the monitored regionState changes (inside vs. outside region)
         regionViewModel.regionState.observe(this, monitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
@@ -43,10 +43,7 @@ class MainActivity : AppCompatActivity() {
         beaconCountTextView = findViewById<TextView>(R.id.beaconCount)
         beaconCountTextView.text = "No beacons detected"
         beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayOf("--"))
-        Handler(Looper.getMainLooper()).postDelayed({
-            Log.d(TAG, "onCreate: running")
-            throw NullPointerException("abscc")
-        },10000) }
+    }
 
     override fun onPause() {
         Log.d(TAG, "onPause")
@@ -120,12 +117,12 @@ class MainActivity : AppCompatActivity() {
     fun rangingButtonTapped(view: View) {
         val beaconManager = BeaconManager.getInstanceForApplication(this)
         if (beaconManager.rangedRegions.size == 0) {
-            beaconManager.startRangingBeacons(beaconReferenceApplication.region)
+            beaconManager.startRangingBeacons(beaconReferenceApplication.iBeaconRegion)
             rangingButton.text = "Stop Ranging"
             beaconCountTextView.text = "Ranging enabled -- awaiting first callback"
         }
         else {
-            beaconManager.stopRangingBeacons(beaconReferenceApplication.region)
+            beaconManager.stopRangingBeacons(beaconReferenceApplication.iBeaconRegion)
             rangingButton.text = "Start Ranging"
             beaconCountTextView.text = "Ranging disabled -- no beacons detected"
             beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayOf("--"))
@@ -137,14 +134,14 @@ class MainActivity : AppCompatActivity() {
         var dialogMessage = ""
         val beaconManager = BeaconManager.getInstanceForApplication(this)
         if (beaconManager.monitoredRegions.size == 0) {
-            beaconManager.startMonitoring(beaconReferenceApplication.region)
+            beaconManager.startMonitoring(beaconReferenceApplication.iBeaconRegion)
             dialogTitle = "Beacon monitoring started."
             dialogMessage = "You will see a dialog if a beacon is detected, and another if beacons then stop being detected."
             monitoringButton.text = "Stop Monitoring"
 
         }
         else {
-            beaconManager.stopMonitoring(beaconReferenceApplication.region)
+            beaconManager.stopMonitoring(beaconReferenceApplication.iBeaconRegion)
             dialogTitle = "Beacon monitoring stopped."
             dialogMessage = "You will no longer see dialogs when beacons start/stop being detected."
             monitoringButton.text = "Start Monitoring"
