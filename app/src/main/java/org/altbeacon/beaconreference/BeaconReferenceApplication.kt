@@ -65,6 +65,8 @@ class BeaconReferenceApplication: Application() {
         setupBeaconScanning()
     }
     fun setupBeaconScanning() {
+        val beaconManager = BeaconManager.getInstanceForApplication(this)
+
         val settings = Settings(
             scanStrategy = Settings.ForegroundServiceScanStrategy(
                 Notification.Builder(
@@ -76,15 +78,23 @@ class BeaconReferenceApplication: Application() {
         )
 
         // This will apply the new settings immediately, overwriting thre previously active settings
-        // any individual settings not specifified on the new settings object will revert to their defaults
-        BeaconManager.getInstanceForApplication(this).setSettings(settings)
+        // any individual settings not specifified on the new settings object will be unchanged
+        beaconManager.adjustSettings(settings)
 
 
         //scanStrategy = Settings.IntentScanStrategy(),
         //scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
 
 
-        BeaconManager.getInstanceForApplication(this).activeSettings
+        // The code below will start "monitoring" for beacons matching the region definition at the top of this file
+        beaconManager.startMonitoring(iBeaconRegion)
+        beaconManager.startRangingBeacons(iBeaconRegion)
+        // These two lines set up a Live Data observer so this Activity can get beacon data from the Application class
+        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(iBeaconRegion)
+        // observer will be called each time the monitored regionState changes (inside vs. outside region)
+        regionViewModel.regionState.observeForever( centralMonitoringObserver)
+        // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
+        regionViewModel.rangedBeacons.observeForever( centralRangingObserver)
     }
 
     fun setupBeaconScanningOld() {
