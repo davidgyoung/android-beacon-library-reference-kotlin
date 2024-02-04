@@ -1,9 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
 
+
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.10"
+
+}
 android {
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
+    compileSdk = 34
 
     defaultConfig {
         applicationId "org.altbeacon.beaconreference"
@@ -37,18 +41,20 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.1'
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'org.altbeacon:android-beacon-library:2.20'
     //implementation project(':android-beacon-library:lib')
-
+    // Kotlin serialization
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.3.2"
     //coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1"
     //coroutine scopes
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }

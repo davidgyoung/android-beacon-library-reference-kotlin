@@ -1,66 +1,54 @@
 package org.altbeacon.beaconreference
 
+import BLELogRepository
 import android.app.*
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Environment
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
+import kotlinx.coroutines.runBlocking
 import org.altbeacon.beacon.*
 import org.altbeacon.bluetooth.BluetoothMedic
+import java.io.FileOutputStream
+import java.util.concurrent.Executors
 
-class BeaconReferenceApplication: Application() {
-    // the region definition is a wildcard that matches all beacons regardless of identifiers.
-    // if you only want to detect beacons with a specific UUID, change the id1 paremeter to
-    // a UUID like Identifier.parse("2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6")
+class BeaconReferenceApplication : Application() {
+    // the region definition ensures we are looking for any possible iBeacon
     var region = Region("all-beacons", null, null, null)
-
+    var bleLogRepository = BLELogRepository()
+    val executor = Executors.newFixedThreadPool(1)
     override fun onCreate() {
         super.onCreate()
+
+    //Separate thread required to execute periodic requests
+        // more regularly than ~15 minutes w/ Android killing it
+        executor.execute(Runnable{
+            while (true) {
+                val beacons = runBlocking {
+                    bleLogRepository.consumeLog()
+                }
+                Log.d(TAG, "I will log this line every 10 seconds forever")
+                Thread.sleep(LOGGING_PERIOD);
+               // FileOutputStream( "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)}/log=_10sec.csv",true ).writeCsv(beacons)
+
+            }
+        })
 
         val beaconManager = BeaconManager.getInstanceForApplication(this)
         BeaconManager.setDebug(true)
 
-        // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
-        // find a different type of beacon, you must specify the byte layout for that beacon's
-        // advertisement with a line like below.  The example shows how to find a beacon with the
-        // same byte layout as AltBeacon but with a beaconTypeCode of 0xaabb.  To find the proper
-        // layout expression for other beacon types, do a web search for "setBeaconLayout"
-        // including the quotes.
-        //
-        //beaconManager.getBeaconParsers().clear();
-        //beaconManager.getBeaconParsers().add(new BeaconParser().
-        //        setBeaconLayout("m:0-1=4c00,i:2-24v,p:24-24"));
+        beaconManager.getBeaconParsers().clear()
 
-
-        // By default the AndroidBeaconLibrary will only find AltBeacons.  If you wish to make it
-        // find a different type of beacon like Eddystone or iBeacon, you must specify the byte layout
-        // for that beacon's advertisement with a line like below.
-        //
-        // If you don't care about AltBeacon, you can clear it from the defaults:
-        //beaconManager.getBeaconParsers().clear()
-
-        // Uncomment if you want to block the library from updating its distance model database
-        //BeaconManager.setDistanceModelUpdateUrl("")
-
-        // The example shows how to find iBeacon.
         val parser = BeaconParser().
         setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24")
         parser.setHardwareAssistManufacturerCodes(arrayOf(0x004c).toIntArray())
         beaconManager.getBeaconParsers().add(
             parser)
-
-        // enabling debugging will send lots of verbose debug information from the library to Logcat
-        // this is useful for troubleshooting problmes
-        // BeaconManager.setDebug(true)
-
-
-        // The BluetoothMedic code here, if included, will watch for problems with the bluetooth
-        // stack and optionally:
-        // - power cycle bluetooth to recover on bluetooth problems
-        // - periodically do a proactive scan or transmission to verify the bluetooth stack is OK
-        // BluetoothMedic.getInstance().legacyEnablePowerCycleOnFailures(this) // Android 4-12 only
-        // BluetoothMedic.getInstance().enablePeriodicTests(this, BluetoothMedic.SCAN_TEST + BluetoothMedic.TRANSMIT_TEST)
 
         setupBeaconScanning()
     }
@@ -76,6 +64,10 @@ class BeaconReferenceApplication: Application() {
         // 8+.   the method below shows how you set that up.
         try {
             setupForegroundService()
+            beaconManager.setEnableScheduledScanJobs(false);
+            beaconManager.setBackgroundBetweenScanPeriod(0);
+            beaconManager.setBackgroundScanPeriod(1100);
+
         }
         catch (e: SecurityException) {
             // On Android TIRAMUSU + this security exception will happen
@@ -85,9 +77,13 @@ class BeaconReferenceApplication: Application() {
             Log.d(TAG, "Not setting up foreground service scanning until location permission granted by user")
             return
         }
-        //beaconManager.setEnableScheduledScanJobs(false);
-        //beaconManager.setBackgroundBetweenScanPeriod(0);
-        //beaconManager.setBackgroundScanPeriod(1100);
+        catch (e: RuntimeException)
+        {
+            //I refuse to solve this right now but excepting as everything else works
+            //and error is caused in best practice lib
+        Log.d(TAG,"Foreground Runtime error")
+
+        }
 
         // Ranging callbacks will drop out if no beacons are detected
         // Monitoring callbacks will be delayed by up to 25 minutes on region exit
@@ -98,8 +94,6 @@ class BeaconReferenceApplication: Application() {
         beaconManager.startRangingBeacons(region)
         // These two lines set up a Live Data observer so this Activity can get beacon data from the Application class
         val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(region)
-        // observer will be called each time the monitored regionState changes (inside vs. outside region)
-        regionViewModel.regionState.observeForever( centralMonitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
         regionViewModel.rangedBeacons.observeForever( centralRangingObserver)
 
@@ -126,15 +120,7 @@ class BeaconReferenceApplication: Application() {
         Log.d(TAG, "Back from  enableForegroundServiceScanning")
     }
 
-    val centralMonitoringObserver = Observer<Int> { state ->
-        if (state == MonitorNotifier.OUTSIDE) {
-            Log.d(TAG, "outside beacon region: "+region)
-        }
-        else {
-            Log.d(TAG, "inside beacon region: "+region)
-            sendNotification()
-        }
-    }
+
 
     val centralRangingObserver = Observer<Collection<Beacon>> { beacons ->
         val rangeAgeMillis = System.currentTimeMillis() - (beacons.firstOrNull()?.lastCycleDetectionTimestamp ?: 0)
@@ -143,36 +129,16 @@ class BeaconReferenceApplication: Application() {
             for (beacon: Beacon in beacons) {
                 Log.d(TAG, "$beacon about ${beacon.distance} meters away")
             }
+            bleLogRepository.appendLog(beacons)
         }
         else {
             Log.d(MainActivity.TAG, "Ignoring stale ranged beacons from $rangeAgeMillis millis ago")
         }
     }
 
-    private fun sendNotification() {
-        val builder = NotificationCompat.Builder(this, "beacon-ref-notification-id")
-            .setContentTitle("Beacon Reference Application")
-            .setContentText("A beacon is nearby.")
-            .setSmallIcon(R.drawable.ic_launcher_background)
-        val stackBuilder = TaskStackBuilder.create(this)
-        stackBuilder.addNextIntent(Intent(this, MainActivity::class.java))
-        val resultPendingIntent = stackBuilder.getPendingIntent(
-            0,
-            PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setContentIntent(resultPendingIntent)
-        val channel =  NotificationChannel("beacon-ref-notification-id",
-            "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT)
-        channel.setDescription("My Notification Channel Description")
-        val notificationManager =  getSystemService(
-            Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel);
-        builder.setChannelId(channel.getId());
-        notificationManager.notify(1, builder.build())
-    }
-
     companion object {
         val TAG = "BeaconReference"
+        const val  LOGGING_PERIOD = 10000L
     }
 
 }
