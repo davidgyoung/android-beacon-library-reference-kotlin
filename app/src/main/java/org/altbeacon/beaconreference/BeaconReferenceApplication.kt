@@ -3,6 +3,7 @@ package org.altbeacon.beaconreference
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -67,20 +68,35 @@ class BeaconReferenceApplication: Application() {
     fun setupBeaconScanning() {
         val beaconManager = BeaconManager.getInstanceForApplication(this)
 
+
+        val builder = Notification.Builder(this, "BeaconReferenceApp")
+        builder.setSmallIcon(R.drawable.ic_launcher_background)
+        builder.setContentTitle("Scanning for Beacons")
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_IMMUTABLE
+        )
+        builder.setContentIntent(pendingIntent);
+        val channel =  NotificationChannel("beacon-ref-notification-id",
+            "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT)
+        channel.description = "My Notification Channel Description"
+        val notificationManager =  getSystemService(
+            Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+        builder.setChannelId(channel.id)
+        val notification = builder.build()
+
         val settings = Settings(
             scanStrategy = Settings.ForegroundServiceScanStrategy(
-                Notification.Builder(
-                    this,
-                    "BeaconReferenceApp"
-                ).build(), 1
+                notification, 456
             ),
             scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
         )
 
         // This will apply the new settings immediately, overwriting thre previously active settings
-        // any individual settings not specifified on the new settings object will be unchanged
+        // any individual settings not specified on the new settings object will be unchanged
         beaconManager.adjustSettings(settings)
-
+        //beaconManager.enableForegroundServiceScanning(notification, 456)
 
         //scanStrategy = Settings.IntentScanStrategy(),
         //scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
@@ -89,12 +105,46 @@ class BeaconReferenceApplication: Application() {
         // The code below will start "monitoring" for beacons matching the region definition at the top of this file
         beaconManager.startMonitoring(iBeaconRegion)
         beaconManager.startRangingBeacons(iBeaconRegion)
+
         // These two lines set up a Live Data observer so this Activity can get beacon data from the Application class
         val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(iBeaconRegion)
         // observer will be called each time the monitored regionState changes (inside vs. outside region)
         regionViewModel.regionState.observeForever( centralMonitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
         regionViewModel.rangedBeacons.observeForever( centralRangingObserver)
+
+        testSwitchToIntentScanStrategyFromService()
+    }
+
+    fun setupForegroundService() {
+        val builder = Notification.Builder(this, "BeaconReferenceApp")
+        builder.setSmallIcon(R.drawable.ic_launcher_background)
+        builder.setContentTitle("Scanning for Beacons")
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+                        this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_IMMUTABLE
+                )
+        builder.setContentIntent(pendingIntent);
+        val channel =  NotificationChannel("beacon-ref-notification-id",
+                    "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT)
+        channel.setDescription("My Notification Channel Description")
+        val notificationManager =  getSystemService(
+            Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel);
+        builder.setChannelId(channel.getId());
+        Log.d(TAG, "Calling enableForegroundServiceScanning")
+        BeaconManager.getInstanceForApplication(this).enableForegroundServiceScanning(builder.build(), 456);
+        Log.d(TAG, "Back from  enableForegroundServiceScanning")
+    }
+
+    fun testSwitchToIntentScanStrategyFromService() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            // If a different scan strategy was previously enabled
+            // This code will stop any scanning service, and then restart scanning using
+            // the IntentScanStrategy
+            val settingsDelta = Settings(scanStrategy = Settings.IntentScanStrategy())
+            BeaconManager.getInstanceForApplication(this).adjustSettings(settingsDelta)
+        }, 10000000)
     }
 
     fun setupBeaconScanningOld() {
@@ -138,27 +188,6 @@ class BeaconReferenceApplication: Application() {
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
         regionViewModel.rangedBeacons.observeForever( centralRangingObserver)
 
-    }
-
-    fun setupForegroundService() {
-        val builder = Notification.Builder(this, "BeaconReferenceApp")
-        builder.setSmallIcon(R.drawable.ic_launcher_background)
-        builder.setContentTitle("Scanning for Beacons")
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-                this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setContentIntent(pendingIntent);
-        val channel =  NotificationChannel("beacon-ref-notification-id",
-            "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT)
-        channel.setDescription("My Notification Channel Description")
-        val notificationManager =  getSystemService(
-                Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel);
-        builder.setChannelId(channel.getId());
-        Log.d(TAG, "Calling enableForegroundServiceScanning")
-        BeaconManager.getInstanceForApplication(this).enableForegroundServiceScanning(builder.build(), 456);
-        Log.d(TAG, "Back from  enableForegroundServiceScanning")
     }
 
     val centralMonitoringObserver = Observer<Int> { state ->
