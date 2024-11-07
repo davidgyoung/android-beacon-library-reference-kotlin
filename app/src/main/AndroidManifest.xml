@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
     <!-- Below is only needed if you want to read the device name or establish a bluetooth connection
     -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
