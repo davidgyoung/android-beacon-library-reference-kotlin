@@ -12,21 +12,8 @@ import com.davidgyoungtech.beaconparsers.IBeaconParser
 import org.altbeacon.beacon.*
 
 class BeaconReferenceApplication: Application() {
-    // the region definition is a wildcard that matches all beacons regardless of identifiers.
-    // if you only want to detect beacons with a specific UUID, change the id1 paremeter to
-    // a UUID like Identifier.parse("2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6")
-    // Each BeaconRegion must specify a beacon parser, which defines what format of Bluetooth beacon
-    // to match, e.g. (iBeacon, AltBeacon, Eddystone UID, etc.)
-    // The first parameter uniqueId is a string key that is used to identify this region in the
-    // library.  This string key must be unique for each region you define, and the same uniqueID
-    // must be used to tell the library to start and stop beacon ranging and monitoring.
-    val wildcardIBeaconRegion = BeaconRegion("everyIBeaconRegion", IBeaconParser() /* from com.davidgyoungtech:beacon-parsers:1.0 */, null, null, null)
-    // Below are examples of other region definitions for other beacon formats
-    val wildcardAltBeaconRegion = BeaconRegion("everyAltBeaconRegion", AltBeaconParser(), null, null, null)
-    //val everyEddystoneUidBeaconRegion = BeaconRegion("everyEddystoneUidBeaconRegion", EddystoneUidBeaconParser(), null, null, null)
-    //val everyEddystoneUrlBeaconRegion = BeaconRegion("everyEddystoneUrlBeaconRegion", EddystoneUrlBeaconParser(), null, null, null)
-    val nonBeaconLayout = "s:0-15=4c052726-cd97-4dde-9356-212cc1327a84,i:16-17,i:18-19,i:20-21,p:-:-59"
-    val nonBeaconBeaconRegion = BeaconRegion("nonBeaconRegion", BeaconParser("nonBeacon").setBeaconLayout(nonBeaconLayout), null, null, null)
+    val notaBeaconLayout = "s:0-15=4c052726-cd97-4dde-9356-212cc1327a84,m:16-16=00,i:17-18,i:19-20,i:21-22,p:-:-59"
+    val notaBeaconBeaconRegion = BeaconRegion("notaBeaconBeaconRegion", BeaconParser("nonBeacon").setBeaconLayout(notaBeaconLayout), null, null, null)
 
     override fun onCreate() {
         super.onCreate()
@@ -41,7 +28,8 @@ class BeaconReferenceApplication: Application() {
         // If you don't need background detectsions, then you don't need to set any settings, and
         // can accept the default with is to use a service to do the scanning.  This works well for
         // beacon detections when the app is in the foreground.
-        val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
+        beaconManager.beaconParsers.clear()
+        //val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
         // You can also use the library's built-in "foreground service" to scan for beacons while
         // the app is in the background using the code below.  This shows a notification to
         // the user that your app is running , and will require the ACCESS_BACKGROUND_LOCATION
@@ -52,19 +40,21 @@ class BeaconReferenceApplication: Application() {
         // settings not specified on the new settings object will revert to defaults.
         // If you only want to make a partial change to the settings, without reverting to defaults
         // for any settings unspecified you may call `beaconManager.adjustSettings(settings)`
-        beaconManager.replaceSettings(settings)
+        //beaconManager.replaceSettings(settings)
 
+
+        BeaconManager.setDebug(true)
         // The code below will start "monitoring" and "ranging" for beacons matching the region
         // definition at the top of this file
-        beaconManager.startMonitoring(nonBeaconBeaconRegion)
-        beaconManager.startRangingBeacons(nonBeaconBeaconRegion)
+        beaconManager.startMonitoring(notaBeaconBeaconRegion)
+        beaconManager.startRangingBeacons(notaBeaconBeaconRegion)
 
-        val transmitter = BeaconTransmitter(this,  BeaconParser("nonBeacon").setBeaconLayout(nonBeaconLayout))
-        val beacon = Beacon.Builder().setId1("1").setId2("1").setId3("1").build()
+        val transmitter = BeaconTransmitter(this,  BeaconParser("nonBeacon").setBeaconLayout(notaBeaconLayout))
+        val beacon = Beacon.Builder().setId1("1").setId2("2").setId3("3").build()
         transmitter.startAdvertising(beacon)
 
         // Set up a Live Data observer so this Activity can get beacon data from the Application class
-        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(wildcardIBeaconRegion)
+        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(notaBeaconBeaconRegion)
         // observer will be called each time the monitored regionState changes (inside vs. outside region)
         regionViewModel.regionState.observeForever( centralMonitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)

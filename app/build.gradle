@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
+    compileSdk 34
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId "org.altbeacon.beaconreference"
@@ -43,8 +43,8 @@ dependencies {
     implementation('com.davidgyoungtech:beacon-parsers:1.0') {
         exclude group: 'org.altbeacon'
     }
-    implementation 'org.altbeacon:android-beacon-library:2.21.0-beta1'
-    //implementation project(':android-beacon-library:lib')
+    //implementation 'org.altbeacon:android-beacon-library:2.21.0-beta1'
+    implementation project(':android-beacon-library:lib')
 
     //coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
