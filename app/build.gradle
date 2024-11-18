@@ -43,7 +43,7 @@ dependencies {
     implementation('com.davidgyoungtech:beacon-parsers:1.0') {
         exclude group: 'org.altbeacon'
     }
-    implementation 'org.altbeacon:android-beacon-library:2.21.0-beta1'
+    implementation 'org.altbeacon:android-beacon-library:2.21.0-beta4'
     //implementation project(':android-beacon-library:lib')
 
     //coroutines

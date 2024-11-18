@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
 
         }
         else {
-            beaconManager.stopMonitoring(beaconReferenceApplication.wildcardAltBeaconRegion)
+            beaconManager.stopMonitoring(beaconReferenceApplication.wildcardIBeaconRegion)
             dialogTitle = "Beacon monitoring stopped."
             dialogMessage = "You will no longer see dialogs when beacons start/stop being detected."
             monitoringButton.text = "Start Monitoring"
