@@ -12,8 +12,10 @@ import com.davidgyoungtech.beaconparsers.IBeaconParser
 import org.altbeacon.beacon.*
 
 class BeaconReferenceApplication: Application() {
+    // This beacon layout is for a GATT 128-bit Service UUID advertisement with 7 bytes of attached service data
+    // The service data has one matching byte of 0x00, folllowed by three two-byte identifiers.
     val notaBeaconLayout = "s:0-15=4c052726-cd97-4dde-9356-212cc1327a84,m:16-16=00,i:17-18,i:19-20,i:21-22,p:-:-59"
-    val notaBeaconBeaconRegion = BeaconRegion("notaBeaconBeaconRegion", BeaconParser("nonBeacon").setBeaconLayout(notaBeaconLayout), null, null, null)
+    val notaBeaconBeaconRegion = BeaconRegion("notaBeaconBeaconRegion", BeaconParser("notabeacon").setBeaconLayout(notaBeaconLayout), null, null, null)
 
     override fun onCreate() {
         super.onCreate()
@@ -23,24 +25,13 @@ class BeaconReferenceApplication: Application() {
     fun setupBeaconScanning() {
         val beaconManager = BeaconManager.getInstanceForApplication(this)
 
-        // The intent scan strategy configured below will set up Blutooth scanning to find beacons
+        // The intent scan strategy configured below will set up Bluetooth scanning to find beacons
         // that are delivered by Android Intent.  This works well for background detections.
-        // If you don't need background detectsions, then you don't need to set any settings, and
+        // If you don't need background detections, then you don't need to set any settings, and
         // can accept the default with is to use a service to do the scanning.  This works well for
         // beacon detections when the app is in the foreground.
-        beaconManager.beaconParsers.clear()
-        //val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
-        // You can also use the library's built-in "foreground service" to scan for beacons while
-        // the app is in the background using the code below.  This shows a notification to
-        // the user that your app is running , and will require the ACCESS_BACKGROUND_LOCATION
-        // permission to be granted by the user in advance.
-        //val settings = getSettingsForForegroundServiceScanning()
-
-        // This line below will apply the new beacon scanning settings immediately  Any individual
-        // settings not specified on the new settings object will revert to defaults.
-        // If you only want to make a partial change to the settings, without reverting to defaults
-        // for any settings unspecified you may call `beaconManager.adjustSettings(settings)`
-        //beaconManager.replaceSettings(settings)
+        val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
+        beaconManager.replaceSettings(settings)
 
 
         BeaconManager.setDebug(true)
@@ -49,7 +40,8 @@ class BeaconReferenceApplication: Application() {
         beaconManager.startMonitoring(notaBeaconBeaconRegion)
         beaconManager.startRangingBeacons(notaBeaconBeaconRegion)
 
-        val transmitter = BeaconTransmitter(this,  BeaconParser("nonBeacon").setBeaconLayout(notaBeaconLayout))
+        // This shows how to transmit an advertisement that will not require location permission to detect
+        val transmitter = BeaconTransmitter(this,  BeaconParser("notabeacon").setBeaconLayout(notaBeaconLayout))
         val beacon = Beacon.Builder().setId1("1").setId2("2").setId3("3").build()
         transmitter.startAdvertising(beacon)
 
@@ -59,33 +51,6 @@ class BeaconReferenceApplication: Application() {
         regionViewModel.regionState.observeForever( centralMonitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
         regionViewModel.rangedBeacons.observeForever( centralRangingObserver)
-    }
-
-    fun getSettingsForForegroundServiceScanning(): Settings {
-
-        val builder = Notification.Builder(this, "BeaconReferenceApp")
-        builder.setSmallIcon(R.drawable.ic_launcher_background)
-        builder.setContentTitle("Scanning for Beacons")
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setContentIntent(pendingIntent);
-        val channel =  NotificationChannel("beacon-ref-notification-id",
-            "My Notification Name", NotificationManager.IMPORTANCE_DEFAULT)
-        channel.description = "My Notification Channel Description"
-        val notificationManager =  getSystemService(
-            Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
-        builder.setChannelId(channel.id)
-        val notification = builder.build()
-
-        return Settings(
-            scanStrategy = Settings.ForegroundServiceScanStrategy(
-                notification, 456
-            ),
-            scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0)
-        )
     }
 
     private val centralMonitoringObserver = Observer<Int> { state ->
