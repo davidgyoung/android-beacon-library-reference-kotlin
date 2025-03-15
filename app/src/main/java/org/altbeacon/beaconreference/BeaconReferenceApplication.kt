@@ -6,8 +6,6 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
-import com.davidgyoungtech.beaconparsers.EddystoneUidBeaconParser
-import com.davidgyoungtech.beaconparsers.EddystoneUrlBeaconParser
 import com.davidgyoungtech.beaconparsers.IBeaconParser
 import org.altbeacon.beacon.*
 
@@ -36,7 +34,7 @@ class BeaconReferenceApplication: Application() {
 
         // The intent scan strategy configured below will set up Blutooth scanning to find beacons
         // that are delivered by Android Intent.  This works well for background detections.
-        // If you don't need background detectsions, then you don't need to set any settings, and
+        // If you don't need background detections, then you don't need to set any settings, and
         // can accept the default with is to use a service to do the scanning.  This works well for
         // beacon detections when the app is in the foreground.
         //val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
@@ -51,9 +49,11 @@ class BeaconReferenceApplication: Application() {
         // If you only want to make a partial change to the settings, without reverting to defaults
         // for any settings unspecified you may call `beaconManager.adjustSettings(settings)`
         //beaconManager.replaceSettings(settings)
+        //beaconManager.adjustSettings(Settings(debug = true))
 
         // The code below will start "monitoring" and "ranging" for beacons matching the region
         // definition at the top of this file
+
         beaconManager.startMonitoring(wildcardIBeaconRegion)
         beaconManager.startRangingBeacons(wildcardIBeaconRegion)
 
@@ -88,7 +88,8 @@ class BeaconReferenceApplication: Application() {
             scanStrategy = Settings.ForegroundServiceScanStrategy(
                 notification, 456
             ),
-            scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0)
+            scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
+            longScanForcingEnabled = true
         )
     }
 
