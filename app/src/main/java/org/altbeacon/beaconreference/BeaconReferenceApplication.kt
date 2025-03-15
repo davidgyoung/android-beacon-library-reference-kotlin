@@ -3,6 +3,7 @@ package org.altbeacon.beaconreference
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
@@ -38,24 +39,30 @@ class BeaconReferenceApplication: Application() {
         // can accept the default with is to use a service to do the scanning.  This works well for
         // beacon detections when the app is in the foreground.
         //val settings = Settings(scanStrategy = Settings.IntentScanStrategy(), longScanForcingEnabled = true)
-        // You can also use the library's built-in "foreground service" to scan for beacons while
-        // the app is in the background using the code below.  This shows a notification to
-        // the user that your app is running , and will require the ACCESS_BACKGROUND_LOCATION
-        // permission to be granted by the user in advance.
-        //val settings = getSettingsForForegroundServiceScanning()
 
-        // This line below will apply the new beacon scanning settings immediately  Any individual
-        // settings not specified on the new settings object will revert to defaults.
-        // If you only want to make a partial change to the settings, without reverting to defaults
-        // for any settings unspecified you may call `beaconManager.adjustSettings(settings)`
-        //beaconManager.replaceSettings(settings)
-        //beaconManager.adjustSettings(Settings(debug = true))
+        beaconManager.adjustSettings(Settings(debug = true))
 
         // The code below will start "monitoring" and "ranging" for beacons matching the region
         // definition at the top of this file
-
         beaconManager.startMonitoring(wildcardIBeaconRegion)
         beaconManager.startRangingBeacons(wildcardIBeaconRegion)
+
+        Log.d(TAG, "Waiting 30 seconds to start foreground service.  Please put app to background.")
+        Handler().postDelayed({
+            Log.d(TAG, "We are starting the foreground service when the app is in the "+if (beaconManager.backgroundMode) "background" else "foreground")
+            // You can also use the library's built-in "foreground service" to scan for beacons while
+            // the app is in the background using the code below.  This shows a notification to
+            // the user that your app is running , and will require the ACCESS_BACKGROUND_LOCATION
+            // permission to be granted by the user in advance.
+            val settings = getSettingsForForegroundServiceScanning()
+
+            // This line below will apply the new beacon scanning settings immediately  Any individual
+            // settings not specified on the new settings object will revert to defaults.
+            // If you only want to make a partial change to the settings, without reverting to defaults
+            // for any settings unspecified you may call `beaconManager.adjustSettings(settings)`
+            beaconManager.replaceSettings(settings)
+        }, 30000)
+
 
         // Set up a Live Data observer so this Activity can get beacon data from the Application class
         val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(wildcardIBeaconRegion)
@@ -89,7 +96,8 @@ class BeaconReferenceApplication: Application() {
                 notification, 456
             ),
             scanPeriods = Settings.ScanPeriods(1100, 0, 1100, 0),
-            longScanForcingEnabled = true
+            longScanForcingEnabled = true,
+            debug = true
         )
     }
 
