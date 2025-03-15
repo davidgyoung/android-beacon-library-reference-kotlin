@@ -14,15 +14,17 @@ import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.MonitorNotifier
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import org.altbeacon.beacon.permissions.BeaconScanPermissionsActivity
 
 class MainActivity : AppCompatActivity() {
-    lateinit var beaconListView: ListView
-    lateinit var beaconCountTextView: TextView
-    lateinit var monitoringButton: Button
-    lateinit var rangingButton: Button
-    lateinit var beaconReferenceApplication: BeaconReferenceApplication
-    var alertDialog: AlertDialog? = null
+    private lateinit var beaconListView: ListView
+    private lateinit var beaconCountTextView: TextView
+    private lateinit var monitoringButton: Button
+    private lateinit var rangingButton: Button
+    private lateinit var beaconReferenceApplication: BeaconReferenceApplication
+    private var alertDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         beaconReferenceApplication = application as BeaconReferenceApplication
 
         // Set up a Live Data observer for beacon data
-        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(beaconReferenceApplication.region)
+        val regionViewModel = BeaconManager.getInstanceForApplication(this).getRegionViewModel(beaconReferenceApplication.wildcardIBeaconRegion)
         // observer will be called each time the monitored regionState changes (inside vs. outside region)
         regionViewModel.regionState.observe(this, monitoringObserver)
         // observer will be called each time a new list of beacons is ranged (typically ~1 second in the foreground)
@@ -69,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         else {
             // All permissions are granted now.  In the case where we are configured
             // to use a foreground service, we will not have been able to start scanning until
-            // after permissions are graned.  So we will do so here.
+            // after permissions are granted.  So we will do so here.
             if (BeaconManager.getInstanceForApplication(this).monitoredRegions.size == 0) {
                 (application as BeaconReferenceApplication).setupBeaconScanning()
             }
@@ -114,13 +116,13 @@ class MainActivity : AppCompatActivity() {
 
     fun rangingButtonTapped(view: View) {
         val beaconManager = BeaconManager.getInstanceForApplication(this)
-        if (beaconManager.rangedRegions.size == 0) {
-            beaconManager.startRangingBeacons(beaconReferenceApplication.region)
+        if (beaconManager.rangedRegions.isEmpty()) {
+            beaconManager.startRangingBeacons(beaconReferenceApplication.wildcardIBeaconRegion)
             rangingButton.text = "Stop Ranging"
             beaconCountTextView.text = "Ranging enabled -- awaiting first callback"
         }
         else {
-            beaconManager.stopRangingBeacons(beaconReferenceApplication.region)
+            beaconManager.stopRangingBeacons(beaconReferenceApplication.wildcardIBeaconRegion)
             rangingButton.text = "Start Ranging"
             beaconCountTextView.text = "Ranging disabled -- no beacons detected"
             beaconListView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, arrayOf("--"))
@@ -131,15 +133,15 @@ class MainActivity : AppCompatActivity() {
         var dialogTitle = ""
         var dialogMessage = ""
         val beaconManager = BeaconManager.getInstanceForApplication(this)
-        if (beaconManager.monitoredRegions.size == 0) {
-            beaconManager.startMonitoring(beaconReferenceApplication.region)
+        if (beaconManager.monitoredRegions.isEmpty()) {
+            beaconManager.startMonitoring(beaconReferenceApplication.wildcardIBeaconRegion)
             dialogTitle = "Beacon monitoring started."
             dialogMessage = "You will see a dialog if a beacon is detected, and another if beacons then stop being detected."
             monitoringButton.text = "Stop Monitoring"
 
         }
         else {
-            beaconManager.stopMonitoring(beaconReferenceApplication.region)
+            beaconManager.stopMonitoring(beaconReferenceApplication.wildcardIBeaconRegion)
             dialogTitle = "Beacon monitoring stopped."
             dialogMessage = "You will no longer see dialogs when beacons start/stop being detected."
             monitoringButton.text = "Start Monitoring"
@@ -157,10 +159,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         val TAG = "MainActivity"
-        val PERMISSION_REQUEST_BACKGROUND_LOCATION = 0
-        val PERMISSION_REQUEST_BLUETOOTH_SCAN = 1
-        val PERMISSION_REQUEST_BLUETOOTH_CONNECT = 2
-        val PERMISSION_REQUEST_FINE_LOCATION = 3
     }
 
 }

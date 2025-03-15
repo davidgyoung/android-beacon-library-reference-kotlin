@@ -92,10 +92,10 @@ class PermissionsHelper(val context: Context) {
             // Manifest.permission.BLUETOOTH_CONNECT is not absolutely required to do just scanning,
             // but it is required if you want to access some info from the scans like the device name
             // and the aditional cost of requsting this access is minimal, so we just request it
-            permissions.add(arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT))
+            permissions.add(arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE))
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // As of version T (13) we POST_NOTIFICATIONS permissions if using a foreground service
+            // As of version nonBeaconBeaconRegionT (13) we POST_NOTIFICATIONS permissions if using a foreground service
             permissions.add(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
         }
         return permissions
